@@ -1,0 +1,243 @@
+		<fieldset>
+		<form id="control"></form>
+		<form action="" method="post" id="update" enctype="multipart/form-data">		
+			<table>
+					<tr>
+						<td>
+							<div style="font-size: 14px; width: 80px;">Программа:</div>
+						</td>
+						<td>
+							<select name="type" id="type">
+									<option id="jetretail" style="width: 274px;">JetRetail</option>
+									<option id="addjet" style="width: 274px;">AdditionJetRetail</option>
+							</select>
+						</td>
+						<td></td>
+						<td></td>
+						<td>
+							 <div style="font-size: 14px; width: 55px; height: 30px;  line-height: 30px;">Версия:</div>
+						</td>
+						<td id="stolbec">
+							<input name="auto" id="auto" type="text" size="15">
+						</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td>
+							<div><div style="font-size: 14px; width: 200px;"><input type="checkbox">Ручной ввод версии</div></div>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<div style="font-size: 14px; width: 64px; height: 40px;  line-height: 40px;">Windows:</div>
+						</td>
+						<td>
+							<input type="file" name="filename_win">		
+						</td>
+						<td>
+							<div style="font-size: 14px; width: 55px;">Версия:</div>
+						</td>
+						<td>
+							<div name="version_win" id="version_win" type="text" size="8"></div>
+						</td>
+						<td>
+							<div style="font-size: 14px; width: 55px; margin: 20%;">Script:</div>
+						</td>
+						<td>
+							<input type="file" name="script">	
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<div style="font-size: 14px; width: 64px; height: 40px;  line-height: 40px;">Linux32:</div>
+						</td>
+						<td>
+							<input type="file" name="filename_lin32">		
+						</td>
+						<td>
+							<div style="font-size: 14px; width: 55px;">Версия:</div>
+						</td>
+						<td>
+							<div name="version_lin32" id="version_lin32" type="text" size="8"></div>
+						</td>
+						<td></td>
+						<td>
+							<input form="control" name="win" type="submit" class="baton" value="Проверить версию">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<div style="font-size: 14px; width: 64px; height: 40px;  line-height: 40px;">Linux64:</div>
+						</td>
+						<td>
+							<input type="file" name="filename_lin64">		
+						</td>
+						<td>
+							<div style="font-size: 14px; width: 55px;">Версия:</div>
+						</td>
+						<td>
+							<div name="version_lin64" id="version_lin64" type="text" size="8"></div>
+						</td>
+						<td></td>
+						<td>
+							<input name="input" type="submit" class="baton" value="Обновить ПО">
+						</td>
+					</tr>				
+			</table>
+		</form>	
+</fieldset>
+	
+<script type="text/javascript">
+
+$(":checkbox").change(function(){
+    if(this.checked){
+		$( '#auto').remove();
+		$('#stolbec').append('<input name="version" id="version" type="text" size="46" required>');
+        
+    }else{
+        $( '#version').remove();
+		$('#stolbec').append('<input name="auto" id="auto" type="text" size="46">');
+    }
+});
+
+
+$('#update').submit(function(e){
+	e.preventDefault();
+	wait();
+	var formData = new FormData($('#update')[0]);
+	$.ajax({
+	    type: "POST",
+	    processData: false,
+	    contentType: false,
+	    url: "update_apt/controller.php",
+	    data:  formData 
+	    })
+	.done(function( data ) {
+	    wait(1);
+	    popup(data); 
+	   
+	    });
+	});
+	
+	
+$("#control").submit(function(e){
+	e.preventDefault();
+	document.getElementById('auto').value = "";
+
+	var formData = new FormData($('#update')[0]);
+	$.ajax({
+	    type: "POST",
+	    processData: false,
+	    contentType: false,
+	    url: "update_apt/version_control.php",
+	    data:  formData 
+	    })
+	.done(function( data ) {
+	    wait(1);
+		try{
+			var json = JSON.parse( data );
+			}
+		catch(e){
+			popup(data);
+		}
+		//Получение версии, если загружено 3 файла
+		
+		if(json[0] !== "" && json[1] !== "" && json[2] !== ""){
+			if(json[0] == json[1] && json[0] == json[2] ){
+			
+					$("#version_win").html(json[0]);
+					$("#version_lin32").html(json[1]);
+					$("#version_lin64").html(json[2]);
+					document.getElementById('auto').value = json[0];
+
+					}
+				
+			else{
+					$("#version_win").html(json[0]);
+					$("#version_lin32").html(json[1]);
+					$("#version_lin64").html(json[2]);
+					popup("Версии дистрибутивов не совпадают");
+				}
+		}
+		else{	
+		//Получение версии, если загружено 2 файла
+		
+		if(json[2] == "" && json[1] !== "" && json[0] !== ""){
+			if(json[0] == json[1]){
+		
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				document.getElementById('auto').value = json[0];
+			}
+			else{
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				popup("Версии дистрибутивов не совпадают");
+			}
+		}
+		if(json[1] == "" && json[0] !== "" && json[2] !== ""){
+			if(json[0] == json[2]){
+			
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				document.getElementById('auto').value = json[0];
+			}
+			else{
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				popup("Версии дистрибутивов не совпадают");
+			}
+		}
+		if(json[0] == "" && json[2] !== "" && json[1] !== ""){
+			if(json[2] == json[1]){
+			
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				document.getElementById('auto').value = json[1];
+			}
+			else{
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				popup("Версии дистрибутивов не совпадают");
+			}
+		}
+		
+		//Получение версии, если загружен 1 файл
+		
+		if(json[2] == "" && json[1] == "" && json[0] !== ""){
+			
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				document.getElementById('auto').value = json[0];
+			}
+		if(json[2] == "" && json[1] !== "" && json[0] == ""){
+			
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				document.getElementById('auto').value = json[1];
+			}
+		if(json[2] !== "" && json[1] == "" && json[0] == ""){
+			
+				$("#version_win").html(json[0]);
+				$("#version_lin32").html(json[1]);
+				$("#version_lin64").html(json[2]);
+				document.getElementById('auto').value = json[2];
+			}
+		}
+		});
+		
+	});
+
+</script>
